@@ -11,3 +11,6 @@ def heatmap(data):
     plt.figure(figsize=(18,12))
     corr = data.corr()
     sns.heatmap(corr, vmin=-1, vmax=1)
+    
+def binned_prices(prices):
+    return [0 if price <= 120000 else 1 if price <= 200000 else 2 for price in prices]
