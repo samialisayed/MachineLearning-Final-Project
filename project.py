@@ -6,3 +6,8 @@ def hist_data_columns(data, columns=data.columns, ncols=4):
         ax.set_title(column)
     
     fig.tight_layout()
+
+def heatmap(data):
+    plt.figure(figsize=(18,12))
+    corr = data.corr()
+    sns.heatmap(corr, vmin=-1, vmax=1)
