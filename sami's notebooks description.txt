@@ -1,0 +1,2 @@
+notebook_sami0: reading data description and handling missing values
+notebook_sami1: modification for handling missing values, some EDA, heatmaps and converting some categorical features by label encode
