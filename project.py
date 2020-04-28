@@ -1,4 +1,4 @@
-def hist_data_columns(data, columns=data.columns, ncols=4):
+def hist_data_columns(data, columns, ncols=4):
     nrows = len(columns) // ncols + 1
     fig, axs = plt.subplots(nrows, ncols, figsize=(18,nrows*3))
     for ax, column in zip(axs.ravel(), columns):
@@ -27,3 +27,6 @@ def handling(df):
     df.MasVnrType = df.MasVnrType.fillna(value = 'None')
     df.MasVnrArea = df.MasVnrArea.fillna(value = 0)
     df.dropna(inplace=True)
+    
+def binned_prices(prices):
+    return [0 if price <= 120000 else 1 if price <= 200000 else 2 for price in prices]
