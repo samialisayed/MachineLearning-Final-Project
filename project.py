@@ -23,7 +23,8 @@ def handling(df):
     df.Fence = df.Fence.fillna(value = 'NoFence')
     df.MiscFeature = df.MiscFeature.fillna(value = 'NoMisc')
     df.LotFrontage.fillna(df.groupby('LotConfig')['LotFrontage'].transform('mean'), inplace=True)
-    df.GarageYrBlt = df.GarageYrBlt.fillna(value = df.GarageYrBlt.median())
+    df.GarageYrBlt = df.GarageYrBlt.fillna(df.YearBuilt)
+    df.GarageYrBlt = df.GarageYrBlt - df.YearBuilt
     df.MasVnrType = df.MasVnrType.fillna(value = 'None')
     df.MasVnrArea = df.MasVnrArea.fillna(value = 0)
     df.dropna(inplace=True)
