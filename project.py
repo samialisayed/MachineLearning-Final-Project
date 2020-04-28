@@ -7,10 +7,23 @@ def hist_data_columns(data, columns=data.columns, ncols=4):
     
     fig.tight_layout()
 
-def heatmap(data):
-    plt.figure(figsize=(18,12))
-    corr = data.corr()
-    sns.heatmap(corr, vmin=-1, vmax=1)
-    
-def binned_prices(prices):
-    return [0 if price <= 120000 else 1 if price <= 200000 else 2 for price in prices]
+def handling(df):
+    df.Alley = df.Alley.fillna(value = 'NoAlley')
+    df.BsmtCond = df.BsmtCond.fillna(value = 'NoBsmt')
+    df.BsmtQual = df.BsmtQual.fillna(value = 'NoBsmt')
+    df.BsmtExposure = df.BsmtExposure.fillna(value= 'NoBsmt')
+    df.BsmtFinType1 = df.BsmtFinType1.fillna(value= 'NoBsmt')
+    df.BsmtFinType2 = df.BsmtFinType2.fillna(value= 'NoBsmt')
+    df.FireplaceQu = df.FireplaceQu.fillna(value = 'Nofireplace')
+    df.GarageType = df.GarageType.fillna(value = 'NoGarage')
+    df.GarageCond = df.GarageCond.fillna(value = 'NoGarage')
+    df.GarageFinish = df.GarageFinish.fillna(value = 'NoGarage')
+    df.GarageQual = df.GarageQual.fillna(value = 'NoGarage')
+    df.PoolQC = df.PoolQC.fillna(value = 'NoPool')
+    df.Fence = df.Fence.fillna(value = 'NoFence')
+    df.MiscFeature = df.MiscFeature.fillna(value = 'NoMisc')
+    df.LotFrontage.fillna(df.groupby('LotConfig')['LotFrontage'].transform('mean'), inplace=True)
+    df.GarageYrBlt = df.GarageYrBlt.fillna(value = df.GarageYrBlt.median())
+    df.MasVnrType = df.MasVnrType.fillna(value = 'None')
+    df.MasVnrArea = df.MasVnrArea.fillna(value = 0)
+    df.dropna(inplace=True)
