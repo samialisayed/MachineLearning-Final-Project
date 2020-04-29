@@ -41,7 +41,11 @@ def preprocessed_data(data):
     from sklearn.pipeline import Pipeline
     from sklearn.compose import ColumnTransformer
     
-    data=data.drop(['Id','SalePrice'], axis=1)
+    if 'SalePrice' in data.columns:
+        data=data.drop('SalePrice', axis=1)
+    if 'Id' in data.columns:
+        data=data.drop('Id', axis=1)
+        
     data=data.astype({'LotFrontage': 'int64', 'MasVnrArea': 'int64', 'GarageYrBlt': 'int64'})
     
     categorical_data = ['MSSubClass', 'MSZoning', 'Alley', 'LandContour', 'LotConfig',
