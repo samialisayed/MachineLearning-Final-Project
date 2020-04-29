@@ -42,7 +42,7 @@ def preprocessed_data(data):
     from sklearn.compose import ColumnTransformer
     
     data.drop(['Id','SalePrice'], axis=1, inplace=True)
-    data.astype({'LotFrontage': 'int64', 'MasVnrArea': 'int64', 'GarageYrBlt': 'int64'}, inplace=True)
+    data=data.astype({'LotFrontage': 'int64', 'MasVnrArea': 'int64', 'GarageYrBlt': 'int64'})
     
     categorical_data = ['MSSubClass', 'MSZoning', 'Alley', 'LandContour', 'LotConfig',
        'Neighborhood', 'Condition1', 'Condition2', 'BldgType', 'HouseStyle', 
