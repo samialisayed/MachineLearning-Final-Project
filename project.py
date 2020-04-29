@@ -1,4 +1,4 @@
-def hist_data_columns(data, columns=data.columns, ncols=4):
+def hist_data_columns(data, columns, ncols=4):
     nrows = len(columns) // ncols + 1
     fig, axs = plt.subplots(nrows, ncols, figsize=(18,nrows*3))
     for ax, column in zip(axs.ravel(), columns):
@@ -7,7 +7,7 @@ def hist_data_columns(data, columns=data.columns, ncols=4):
     
     fig.tight_layout()
 
-def handlingMissingValues(df):
+def handling_missing_values(df):
     df.Alley = df.Alley.fillna(value = 'NoAlley')
     df.BsmtCond = df.BsmtCond.fillna(value = 'NoBsmt')
     df.BsmtQual = df.BsmtQual.fillna(value = 'NoBsmt')
@@ -28,6 +28,56 @@ def handlingMissingValues(df):
     df.MasVnrType = df.MasVnrType.fillna(value = 'None')
     df.MasVnrArea = df.MasVnrArea.fillna(value = 0)
     df.dropna(inplace=True)
+    
+def classification_target(data):
+    return [0 if price <= 120000 else 1 if price <= 200000 else 2 for price in data['SalePrice']]
+
+def preprocessed_data(data):
+    """returns preprocessed data as numpy array ready for decision tree"""
+    
+    from sklearn.preprocessing import OneHotEncoder
+    from sklearn.preprocessing import OrdinalEncoder
+    from sklearn.preprocessing import LabelBinarizer
+    from sklearn.pipeline import Pipeline
+    from sklearn.compose import ColumnTransformer
+    
+    data.drop(['Id','SalePrice'], axis=1, inplace=True)
+    data.astype({'LotFrontage': 'int64', 'MasVnrArea': 'int64', 'GarageYrBlt': 'int64'}, inplace=True)
+    
+    categorical_data = ['MSSubClass', 'MSZoning', 'Alley', 'LandContour', 'LotConfig',
+       'Neighborhood', 'Condition1', 'Condition2', 'BldgType', 'HouseStyle', 
+       'RoofStyle', 'RoofMatl', 'Exterior1st', 'Exterior2nd', 'MasVnrType',
+       'Foundation', 'BsmtFinType1', 'BsmtFinType2', 'Heating', 'Functional', 'GarageType',
+       'Fence', 'MiscFeature', 'YrSold', 'SaleType', 'SaleCondition']
+    
+    numeric_data = ['LotFrontage', 'LotArea', 'OverallQual', 'OverallCond', 'YearBuilt', 'YearRemodAdd',
+                'MasVnrArea', 'BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF', 'TotalBsmtSF', '1stFlrSF', '2ndFlrSF',
+                'LowQualFinSF', 'GrLivArea', 'BsmtFullBath', 'BsmtHalfBath', 'FullBath',
+                'HalfBath', 'BedroomAbvGr', 'KitchenAbvGr', 'TotRmsAbvGrd', 'Fireplaces', 'GarageYrBlt',
+                'GarageCars', 'GarageArea', 'WoodDeckSF', 'OpenPorchSF',
+                'EnclosedPorch', '3SsnPorch', 'ScreenPorch', 'PoolArea', 'MiscVal', 'MoSold']
+    
+    boolean_data = ['Street', 'CentralAir']
+    
+    ordinal_data = ['LotShape', 'Utilities', 'LandSlope', 'ExterQual', 'ExterCond', 'BsmtQual',
+                'BsmtCond', 'BsmtExposure', 'HeatingQC', 'Electrical', 'KitchenQual', 'FireplaceQu',
+                'GarageFinish', 'GarageQual', 'GarageCond', 'PavedDrive', 'PoolQC']
+    
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('cat', OneHotEncoder(handle_unknown='ignore', dtype='int8'), categorical_data),
+            ('ord', OrdinalEncoder(dtype='int8'), ordinal_data+boolean_data),
+            ('num', 'passthrough', numeric_data)])
+    
+    return preprocessor.fit_transform(data)
+    
+def restoring_data(data):
+    columns = data[0].split(',')
+    data = pd.DataFrame(data[1:])[0].str.split(',',expand=True)
+    data.columns = columns
+    for col, dtype in zip(columns, data_types):
+        data[col] = data[col].astype(dtype)
+    return data
 
 def Heatmap(df):
     corr = df.corr()
