@@ -101,23 +101,29 @@ def LabelEncoder(df):
     df.BsmtExposure = df.BsmtExposure.map({'Gd':4, 'Av':3, 'Mn':2, 'No':1, 'NoBsmt':0})
     df.BsmtFinType1 = df.BsmtFinType1.map({'GLQ':6,'ALQ':5,'BLQ':4,'Rec':3,'LwQ':2,'Unf':1,'NoBsmt':0})
     df.BsmtFinType2 = df.BsmtFinType2.map({'GLQ':6,'ALQ':5,'BLQ':4,'Rec':3,'LwQ':2,'Unf':1,'NoBsmt':0})
-
+    
     df.GarageType = df.GarageType.map({'BuiltIn':6, 'Attchd': 5, '2Types':4 , 'Basment':3 , 'Detchd':2, 'CarPort' :1 , 'NoGarage': 0})
     df.GarageCond = df.GarageCond.map({'NoGarage':0, 'Po':1, 'Fa':2, 'TA':3, 'Gd':4, 'Ex':5})
     df.GarageQual = df.GarageQual.map({'NoGarage':0, 'Po':1, 'Fa':2, 'TA':3, 'Gd':4, 'Ex':5})
     df.GarageFinish = df.GarageFinish.map({'Fin':3, 'RFn':2, 'Unf':1, 'NoGarage':0})
-    df.PavedDrive = df.PavedDrive.map({'Y':2,'P':1, 'N':0 })
-
-    df.MSZoning = df.MSZoning.map({"RL":4,'RM':3,'RH':2,'C (all)':1,'FV':0})
-    df.Street = df.Street.map({'Pave':0,'Grvl':1})
-    df.Alley = df.Alley.map({'NoAlley':0,'Grvl':1, 'Pave':0})
-    df.LotShape = df.LotShape.map({'Reg':0, 'IR1':1, 'IR2':2, 'IR3':3})
-    df.ExterCond = df.ExterCond.map({"Ex":4,'Gd':3,'TA':2,'Fa':1,'Po':0})
-    df.ExterQual = df.ExterQual.map({"Ex":4,'Gd':3,'TA':2,'Fa':1,'Po':0})
-
+    df.PavedDrive = df.PavedDrive.map({'Y':3,'P':2, 'N':1 })
+    
+    df.MSZoning = df.MSZoning.map({'FV':1,'C (all)':2,"RL":3,'RM':4,'RH':5})
+    df.Street = df.Street.map({'Pave':2,'Grvl':1})
+    df.Alley = df.Alley.map({'NoAlley':0,'Grvl':1, 'Pave':2})
+    df.LotShape = df.LotShape.map({'Reg':4, 'IR1':3, 'IR2':2, 'IR3':1})
+    df.ExterCond = df.ExterCond.map({"Ex":5,'Gd':4,'TA':3,'Fa':2,'Po':1})
+    df.ExterQual = df.ExterQual.map({"Ex":5,'Gd':4,'TA':3,'Fa':2,'Po':1})
+    
     df.CentralAir = df.CentralAir.map({'Y':1, 'N':0})
-    df.HeatingQC = df.HeatingQC.map({"Ex":4,'Gd':3,'TA':2,'Fa':1,'Po':0})
+    df.HeatingQC = df.HeatingQC.map({"Ex":5,'Gd':4,'TA':3,'Fa':2,'Po':1})
     df.FireplaceQu = df.FireplaceQu.map({"Ex":5,'Gd':4,'TA':3,'Fa':2,'Po':1, 'Nofireplace':0})
-    df.KitchenQual = df.KitchenQual.map({"Ex":4,'Gd':3,'TA':2,'Fa':1,'Po':0})
+    df.KitchenQual = df.KitchenQual.map({"Ex":5,'Gd':4,'TA':3,'Fa':2,'Po':1})
     df.PoolQC = df.PoolQC.map({"Ex":4,'Gd':3,'TA':2,'Fa':1,'NoPool':0})
     df.Fence = df.Fence.map({'GdPrv':4 , 'MnPrv':3 , 'GdWo':2 , 'MnWw':1 , 'NoFence':0})
+    
+    df.LandSlope = df.LandSlope.map({'Sev':3,'Mod':2, 'Gtl':1 })
+    df.Functional = df.Functional.map({'Typ':7,'Min1':6,'Min2':5,'Mod':4,'Maj1':3,'Maj2':2,'Sev':1})
+    df.SaleCondition = df.SaleCondition.map({'Normal':6,'Abnorml':5,'AdjLand':4,'Alloca':3,'Family':2,'Partial':1})
+
+    pd.get_dummies(df, drop_first= True)
