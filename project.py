@@ -1,3 +1,22 @@
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+
+def get_train_test_split(data, log=False):
+    if log == True:
+        y = np.log(data['SalePrice'])
+    else:
+        y = data['SalePrice']
+    x = data.drop(labels = ['SalePrice', 'Id'], axis=1).astype("float64")
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.3, random_state = 42)
+    return x_train, x_test, y_train, y_test
+
+def get_binned_train_test_split(data):
+    target = [0 if price <= 120000 else 1 if price <= 200000 else 2 for price in data['SalePrice']]
+    x = data.drop(labels = 'SalePrice', axis=1)
+    x_train, x_test, y_train, y_test = train_test_split(x, target, test_size = 0.3, random_state = 42)
+    return x_train, x_test, y_train, y_test
+
 def hist_data_columns(data, columns, ncols=4):
     nrows = len(columns) // ncols + 1
     fig, axs = plt.subplots(nrows, ncols, figsize=(18,nrows*3))
