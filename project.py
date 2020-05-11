@@ -1,21 +1,75 @@
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 
-def get_train_test_split(data, log=False):
-    if log == True:
-        y = np.log(data['SalePrice'])
-    else:
-        y = data['SalePrice']
-    x = data.drop(labels = ['SalePrice', 'Id'], axis=1).astype("float64")
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.3, random_state = 42)
-    return x_train, x_test, y_train, y_test
 
-def get_binned_train_test_split(data):
-    target = [0 if price <= 120000 else 1 if price <= 200000 else 2 for price in data['SalePrice']]
-    x = data.drop(labels = 'SalePrice', axis=1)
-    x_train, x_test, y_train, y_test = train_test_split(x, target, test_size = 0.3, random_state = 42)
-    return x_train, x_test, y_train, y_test
+def get_scores_rfc(X_train, X_test, y_train, y_test):
+    """prints f1 train_score and test_score for random forest classifier"""
+    best_params_rfc={'max_depth': 20,
+                     'min_samples_leaf': 3,
+                     'min_samples_split': 8,
+                     'n_estimators': 100}
+    
+    rfc = RandomForestClassifier(**best_params_rfc)
+    
+    rfc_features = ['GrLivArea', 'OverallQual', 'GarageArea', 'BsmtUnfSF', 'KitchenQual',
+                    'MiscVal', '2ndFlrSF', 'LotArea', 'GarageFinish', '1stFlrSF',
+                    'TotalBsmtSF']
+    
+    rfc.fit(data.loc[:,rfc_features], target_binned)
+    print(rfc.score(data.loc[:,rfc_features], target_binned),
+          rfc.score(data_test.loc[:,rfc_features], target_test_binned))
+    
+def get_scores_rf(X_train, X_test, y_train, y_test):
+    """prints r2 train_score and test_score for random forest regressor"""
+    best_params_rf = {'max_depth': 30,
+                      'min_samples_leaf': 1,
+                      'min_samples_split': 2,
+                      'n_estimators': 300}
+    
+    rf = RandomForestRegressor(**best_params_rf)
+    
+    rf_features = ['GrLivArea', '1stFlrSF', 'GarageArea', 'TotalBsmtSF', 'BsmtFinSF1',
+                   'OverallQual', '2ndFlrSF', 'LotArea', 'YearBuilt', 'BsmtUnfSF',
+                   'MasVnrArea', 'BsmtQual', 'OverallCond', 'MiscVal', 'KitchenQual',
+                   'GarageFinish']
+    
+    rf.fit(data.loc[:,rf_features], target_log)
+    print(rf.score(data.loc[:,rf_features], target_log),
+          rf.score(data_test.loc[:,rf_features], target_test_log))
+    
+def get_scores_lasso(X_train, X_test, y_train, y_test):
+    """prints r2 train_score and test_score for random forest regressor"""
+    
+    lr_features = ['BsmtFinType1', 'LotArea', 'YearRemodAdd', 'GrLivArea', '2ndFlrSF',
+                   '1stFlrSF', 'GarageArea', 'TotalBsmtSF', 'YearBuilt', 'BsmtFinSF1',
+                   'OpenPorchSF', 'Fireplaces', 'MSZoning', 'LotFrontage', 'OverallQual',
+                   'OverallCond', 'BsmtQual', 'BsmtUnfSF', 'CentralAir', 'GarageFinish',
+                   'Neighborhood_Crawfor', 'EnclosedPorch', 'WoodDeckSF', 'MSSubClass',
+                   'GarageYrBlt', 'ScreenPorch', 'MiscVal', 'KitchenQual', 'MasVnrArea']
+    
+    pipeline_lasso = Pipeline([('scaler', StandardScaler()), ('estimator', Lasso(alpha=.0005))])
+    pipeline_lasso.fit(data.loc[:,lr_features], target_log)
+    
+    print(pipeline_lasso.score(data.loc[:,lr_features], target_log),
+          pipeline_lasso.score(data_test.loc[:,lr_features], target_test_log))
+    
+def get_scores_ridge(X_train, X_test, y_train, y_test):
+    """prints r2 train_score and test_score for random forest regressor"""
+    
+    lr_features = ['BsmtFinType1', 'LotArea', 'YearRemodAdd', 'GrLivArea', '2ndFlrSF',
+                   '1stFlrSF', 'GarageArea', 'TotalBsmtSF', 'YearBuilt', 'BsmtFinSF1',
+                   'OpenPorchSF', 'Fireplaces', 'MSZoning', 'LotFrontage', 'OverallQual',
+                   'OverallCond', 'BsmtQual', 'BsmtUnfSF', 'CentralAir', 'GarageFinish',
+                   'Neighborhood_Crawfor', 'EnclosedPorch', 'WoodDeckSF', 'MSSubClass',
+                   'GarageYrBlt', 'ScreenPorch', 'MiscVal', 'KitchenQual', 'MasVnrArea']
+    
+    pipeline_ridge = Pipeline([('scaler', StandardScaler()), ('estimator', Ridge(alpha=.05))])
+    pipeline_ridge.fit(data.loc[:,lr_features], target_log)
+    print(pipeline_ridge.score(data.loc[:,lr_features], target_log),
+          pipeline_ridge.score(data_test.loc[:,lr_features], target_test_log))
+
 
 def hist_data_columns(data, columns, ncols=4):
     nrows = len(columns) // ncols + 1
@@ -146,3 +200,18 @@ def LabelEncoder(df):
     df.SaleCondition = df.SaleCondition.map({'Normal':6,'Abnorml':5,'AdjLand':4,'Alloca':3,'Family':2,'Partial':1})
 
     pd.get_dummies(df, drop_first= True)
+    
+def get_train_test_split(data, log=False):
+    if log == True:
+        y = np.log(data['SalePrice'])
+    else:
+        y = data['SalePrice']
+    x = data.drop(labels = ['SalePrice', 'Id'], axis=1).astype("float64")
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.3, random_state = 42)
+    return x_train, x_test, y_train, y_test
+
+def get_binned_train_test_split(data):
+    target = [0 if price <= 120000 else 1 if price <= 200000 else 2 for price in data['SalePrice']]
+    x = data.drop(labels = 'SalePrice', axis=1)
+    x_train, x_test, y_train, y_test = train_test_split(x, target, test_size = 0.3, random_state = 42)
+    return x_train, x_test, y_train, y_test
