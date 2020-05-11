@@ -86,7 +86,7 @@ def dropping_uncorrelated_features(data):
     
     return data
 
-def process_data(data):
+def process_data():
     data = pd.read_csv(sys.argv[1])
     
     data = handling_missing_values(data)
@@ -98,5 +98,5 @@ def process_data(data):
     return numerical_data
     
 if __name__ == '__main__':
-    process_data(data).to_csv(sys.argv[1])
+    process_data().to_csv(sys.argv[2])
     
