@@ -1,9 +1,317 @@
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split, cross_validate
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier, GradientBoostingRegressor
+from sklearn.feature_selection import VarianceThreshold
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC, SVR
+from sklearn.linear_model import Ridge, Lasso
+from sklearn.decomposition import PCA
 
+def get_data(file):
+    data = pd.read_csv(file, index_col=0)
+    data = clean_data(data)
+    data = pd.get_dummies(data, drop_first=True)
+    target = data.SalePrice
+    data = data.drop('SalePrice', axis=1)
+    return data, target
 
+def clean_data(df):
+    #filling na
+    df.Alley        = df.Alley.fillna(value = 'NoAlley')
+    df.BsmtCond     = df.BsmtCond.fillna(value = 'NoBsmt')
+    df.BsmtQual     = df.BsmtQual.fillna(value = 'NoBsmt')
+    df.BsmtExposure = df.BsmtExposure.fillna(value= 'NoBsmt')
+    df.BsmtFinType1 = df.BsmtFinType1.fillna(value= 'NoBsmt')
+    df.BsmtFinType2 = df.BsmtFinType2.fillna(value= 'NoBsmt')
+    df.FireplaceQu  = df.FireplaceQu.fillna(value = 'Nofireplace')
+    df.GarageType   = df.GarageType.fillna(value = 'NoGarage')
+    df.GarageCond   = df.GarageCond.fillna(value = 'NoGarage')
+    df.GarageFinish = df.GarageFinish.fillna(value = 'NoGarage')
+    df.GarageQual   = df.GarageQual.fillna(value = 'NoGarage')
+    df.PoolQC       = df.PoolQC.fillna(value = 'NoPool')
+    df.Fence        = df.Fence.fillna(value = 'NoFence')
+    df.MiscFeature  = df.MiscFeature.fillna(value = 'NoMisc')
+    df.LotFrontage  = df.LotFrontage.fillna(df.groupby('LotConfig')['LotFrontage'].transform('mean'))
+    df.GarageYrBlt  = df.GarageYrBlt.fillna(df.YearBuilt)
+    df.GarageYrBlt  = df.GarageYrBlt - df.YearBuilt
+    df.MasVnrType   = df.MasVnrType.fillna(value = 'None')
+    df.MasVnrArea   = df.MasVnrArea.fillna(value = 0)
+    df              = df.dropna()
+    
+    #dropping uniform features
+    df = df.drop('Street', axis=1)
+    df = df.drop('Utilities', axis=1)
+    df = df.drop('Condition2', axis=1)
+    df = df.drop ('RoofMatl', axis=1)
+    df = df.drop('Heating', axis=1)
+    df = df.drop('LowQualFinSF', axis=1)
+    df = df.drop('3SsnPorch', axis=1)
+    df = df.drop('PoolArea', axis=1)
+    df = df.drop('MiscFeature', axis=1)
+    df = df.drop('MoSold', axis=1)
+
+    #converting to numeric
+    df.BsmtCond     = df.BsmtCond.map({'Ex':5 ,'Gd':4 , 'TA':3 ,'Fa':2 ,'Po':1 , 'NoBsmt':0})
+    df.BsmtQual     = df.BsmtQual.map({'Ex':5 ,'Gd':4 , 'TA':3 ,'Fa':2 ,'Po':1 , 'NoBsmt':0})
+    df.BsmtExposure = df.BsmtExposure.map({'Gd':4, 'Av':3, 'Mn':2, 'No':1, 'NoBsmt':0})
+    df.BsmtFinType1 = df.BsmtFinType1.map({'GLQ':6,'ALQ':5,'BLQ':4,'Rec':3,'LwQ':2,'Unf':1,'NoBsmt':0})
+    df.BsmtFinType2 = df.BsmtFinType2.map({'GLQ':6,'ALQ':5,'BLQ':4,'Rec':3,'LwQ':2,'Unf':1,'NoBsmt':0})
+
+    df.GarageCond   = df.GarageCond.map({'NoGarage':0, 'Po':1, 'Fa':2, 'TA':3, 'Gd':4, 'Ex':5})
+    df.GarageQual   = df.GarageQual.map({'NoGarage':0, 'Po':1, 'Fa':2, 'TA':3, 'Gd':4, 'Ex':5})
+    df.GarageFinish = df.GarageFinish.map({'Fin':3, 'RFn':2, 'Unf':1, 'NoGarage':0})
+    df.PavedDrive   = df.PavedDrive.map({'Y':3,'P':2, 'N':1 })
+
+    df.MSZoning     = df.MSZoning.map({'FV':1,'C (all)':2,"RL":3,'RM':4,'RH':5})
+    df.Alley        = df.Alley.map({'NoAlley':0,'Grvl':1, 'Pave':1})
+    df.LotShape     = df.LotShape.map({'Reg':4, 'IR1':3, 'IR2':2, 'IR3':1})
+    df.ExterCond    = df.ExterCond.map({"Ex":5,'Gd':4,'TA':3,'Fa':2,'Po':1})
+    df.ExterQual    = df.ExterQual.map({"Ex":5,'Gd':4,'TA':3,'Fa':2,'Po':1})
+
+    df.CentralAir   = df.CentralAir.map({'Y':1, 'N':0})
+    df.HeatingQC    = df.HeatingQC.map({"Ex":5,'Gd':4,'TA':3,'Fa':2,'Po':1})
+    df.FireplaceQu  = df.FireplaceQu.map({"Ex":5,'Gd':4,'TA':3,'Fa':2,'Po':1, 'Nofireplace':0})
+    df.KitchenQual  = df.KitchenQual.map({"Ex":5,'Gd':4,'TA':3,'Fa':2,'Po':1})
+    df.PoolQC       = df.PoolQC.map({"Ex":4,'Gd':3,'TA':2,'Fa':1,'NoPool':0})
+    df.Fence        = df.Fence.map({'GdPrv':4 , 'MnPrv':3 , 'GdWo':2 , 'MnWw':1 , 'NoFence':0})
+
+    df.LandSlope    = df.LandSlope.map({'Sev':2, 'Mod':1, 'Gtl':0})
+    df.Functional   = df.Functional.map({'Typ':7,'Min1':6,'Min2':5,'Mod':4,'Maj1':3,'Maj2':2,'Sev':1})
+    df.LandContour  = df.LandContour.map({'Lvl':0,'Bnk':1, 'Low':1, 'HLS':1})
+    df.Electrical   = df.Electrical.map({'FuseA':3, 'FuseF':2, 'FuseP':1, 'Mix':0, 'SBrkr':4})
+
+    df.Functional   = df.Functional.map({'Maj1':3, 'Maj2':3, 'Min1':1, 'Min2':1, 'Mod':2, 'Sev':4, 'Typ':0})
+    df.PoolQC       = df.PoolQC.map({'Ex':4, 'Fa':1, 'Gd':3, 'NoPool':0})
+
+    #Dropping uncorrelated data or duplicate columns
+    df = df.drop('Functional', axis=1)
+    df = df.drop('PoolQC', axis=1)
+    df = df.drop('BsmtFinType2', axis=1)
+    df = df.drop('GarageQual', axis=1)
+    df = df.drop('GarageCars', axis=1)
+    df = df.drop('FireplaceQu', axis=1)
+    df = df.drop('BsmtHalfBath', axis=1)
+    df = df.drop('BsmtFinSF2', axis=1)
+    
+    return df
+
+def get_features_importances_df(X_train, y_train):
+    
+    columns = X_train.columns
+
+    GBR = GradientBoostingRegressor(learning_rate= 0.1, n_estimators=500, max_depth=2)
+    GBR.fit(X_train, np.log(y_train))
+    feature_importances_gbr = sorted(zip(columns, GBR.feature_importances_), reverse=True, key=lambda x: x[1])
+    feature_df_gbr = pd.DataFrame(feature_importances_gbr, columns=['feature', 'importance'])
+
+    rf = RandomForestClassifier(max_depth=35, min_samples_leaf=2, min_samples_split=4, n_estimators=250)
+    rf.fit(X_train, y_train)
+    feature_importances_rf = sorted(zip(columns, rf.feature_importances_), reverse=True, key=lambda x: x[1])
+    feature_df_rf = pd.DataFrame(feature_importances_rf, columns=['feature', 'importance'])
+
+    thresholder = VarianceThreshold()
+    thresholder.fit(X_train)
+    feature_importances_var = sorted(zip(columns, thresholder.variances_), reverse=True, key=lambda x: x[1])
+    feature_df_var = pd.DataFrame(feature_importances_var, columns=['feature', 'importance'])
+
+    features_compare = pd.DataFrame()
+    features_compare['var'] = feature_df_var.feature
+    features_compare['gbr'] = feature_df_gbr.feature
+    features_compare['rf'] = feature_df_rf.feature
+
+    return features_compare
+
+def graph_SVC_score_increasing_number_features(X_train, y_train, y_train_binned):
+    feature_df = get_features_importances_df(X_train, y_train)
+    max_num_features = 31
+    best_params_svc = {'C': 0.01, 'gamma': 0.0001, 'kernel': 'linear'}
+
+    f1_macro = []
+    accuracy = []
+    recall = []
+    precision = []
+
+    for num_features in range(1,max_num_features):
+        features = set(feature_df.iloc[:num_features, :].stack())
+        data_partial = X_train.loc[:, features]
+
+        pipeline = Pipeline([('scaler', StandardScaler()), ('classifier', SVC(**best_params_svc))])
+        scores = cross_validate(pipeline, data_partial, y_train_binned, cv=10, n_jobs=-1, return_train_score=True,
+                                scoring=['f1_macro', 'recall_macro', 'precision_macro', 'accuracy'])
+
+        f1_macro.append(scores['test_f1_macro'].mean())
+        accuracy.append(scores['test_accuracy'].mean())
+        recall.append(scores['test_recall_macro'].mean())
+        precision.append(scores['test_precision_macro'].mean())
+        
+    plt.figure(figsize=(16,6))
+    plt.plot(range(1, max_num_features), f1_macro, label='f1_macro')
+    plt.plot(range(1, max_num_features), accuracy, label='accuracy')
+    plt.plot(range(1, max_num_features), recall, label='recall')
+    plt.plot(range(1, max_num_features), precision, label='precision')
+    plt.xticks(range(1, max_num_features))
+    plt.legend()
+    plt.xlabel('Top N Features from all feature ratings')
+    plt.ylabel('metric score %')
+    plt.title('SVM Classifier')
+    
+def graph_RFC_score_increasing_number_features(X_train, y_train, y_train_binned):
+    feature_df = get_features_importances_df(X_train, y_train)
+    max_num_features = 31
+    best_params_rfc={'max_depth': 20, 'min_samples_leaf': 3, 'min_samples_split': 8, 'n_estimators': 100}
+
+    f1_macro = []
+    accuracy = []
+    recall = []
+    precision = []
+
+    for num_features in range(1,max_num_features):
+        features = set(feature_df.iloc[:num_features, :].stack())
+        data_partial = X_train.loc[:, features]
+
+        pipeline = Pipeline([('scaler', StandardScaler()), ('classifier', RandomForestClassifier(**best_params_rfc))])
+        scores = cross_validate(pipeline, data_partial, y_train_binned, cv=10, n_jobs=-1, return_train_score=True,
+                                scoring=['f1_macro', 'recall_macro', 'precision_macro', 'accuracy'])
+
+        f1_macro.append(scores['test_f1_macro'].mean())
+        accuracy.append(scores['test_accuracy'].mean())
+        recall.append(scores['test_recall_macro'].mean())
+        precision.append(scores['test_precision_macro'].mean())
+        
+    plt.figure(figsize=(16,6))
+    plt.plot(range(1, max_num_features), f1_macro, label='f1_macro')
+    plt.plot(range(1, max_num_features), accuracy, label='accuracy')
+    plt.plot(range(1, max_num_features), recall, label='recall')
+    plt.plot(range(1, max_num_features), precision, label='precision')
+    plt.xticks(range(1, max_num_features))
+    plt.legend()
+    plt.xlabel('Top N Features from all feature ratings')
+    plt.ylabel('metric score %')
+    plt.title('Random Forest Classifier')
+    
+def graph_ridge_score_increasing_number_features(X_train, y_train):
+    feature_df = get_features_importances_df(X_train, y_train)
+    max_num_features = 31
+
+    train = []
+    test = []
+
+    for num_features in range(1,max_num_features):
+        features = set(feature_df.iloc[:num_features, :].stack())
+        data_partial = X_train.loc[:, features]
+
+        pipeline = Pipeline([('scaler', StandardScaler()), ('estimator', Ridge(alpha=.05))])
+        scores = cross_validate(pipeline, data_partial, np.log(y_train), cv=10, n_jobs=-1, return_train_score=True)
+
+        train.append(scores['train_score'].mean())
+        test.append(scores['test_score'].mean())
+        
+    plt.figure(figsize=(16,6))
+    plt.plot(range(1, max_num_features), train, label='Train')
+    plt.plot(range(1, max_num_features), test, label='Test')
+    plt.xticks(range(1, max_num_features))
+    plt.legend()
+    plt.xlabel('Top N Features from all feature ratings')
+    plt.ylabel('metric score %')
+    plt.title('Linear Regression (Ridge Regularization)')
+    
+def graph_lasso_score_increasing_number_features(X_train, y_train):
+    feature_df = get_features_importances_df(X_train, y_train)
+    max_num_features = 31
+
+    train = []
+    test = []
+
+    for num_features in range(1,max_num_features):
+        features = set(feature_df.iloc[:num_features, :].stack())
+        data_partial = X_train.loc[:, features]
+
+        pipeline = Pipeline([('scaler', StandardScaler()), ('estimator', Lasso(alpha=.0005))])
+        scores = cross_validate(pipeline, data_partial, np.log(y_train), cv=10, n_jobs=-1, return_train_score=True)
+
+        train.append(scores['train_score'].mean())
+        test.append(scores['test_score'].mean())
+        
+    plt.figure(figsize=(16,6))
+    plt.plot(range(1, max_num_features), train, label='Train')
+    plt.plot(range(1, max_num_features), test, label='Test')
+    plt.xticks(range(1, max_num_features))
+    plt.legend()
+    plt.xlabel('Top N Features from all feature ratings')
+    plt.ylabel('metric score %')
+    plt.title('Linear Regression (Lasso Regularization)')
+    
+def graph_rf_score_increasing_number_features(X_train, y_train):
+    feature_df = get_features_importances_df(X_train, y_train)
+    max_num_features = 21
+
+    train = []
+    test = []
+    
+    best_params_rf = {'max_depth': 30, 'min_samples_leaf': 1,'min_samples_split': 2, 'n_estimators': 300}
+
+    for num_features in range(1,max_num_features):
+        features = set(feature_df.iloc[:num_features, :].stack())
+        data_partial = X_train.loc[:, features]
+
+        pipeline = RandomForestRegressor(**best_params_rf)
+        scores = cross_validate(pipeline, data_partial, np.log(y_train), cv=10, n_jobs=-1, return_train_score=True)
+
+        train.append(scores['train_score'].mean())
+        test.append(scores['test_score'].mean())
+        
+    plt.figure(figsize=(16,6))
+    plt.plot(range(1, max_num_features), train, label='Train')
+    plt.plot(range(1, max_num_features), test, label='Test')
+    plt.xticks(range(1, max_num_features))
+    plt.legend()
+    plt.xlabel('Top N Features from all feature ratings')
+    plt.ylabel('metric score %')
+    plt.title('Random Forest Regression')
+    
+def graph_svr_score_increasing_number_features(X_train, y_train):
+    feature_df = get_features_importances_df(X_train, y_train)
+    max_num_features = 31
+
+    train = []
+    test = []
+    
+    best_params_svr = {'C': 0.1, 'kernel': 'linear'}
+
+    for num_features in range(1,max_num_features):
+        features = set(feature_df.iloc[:num_features, :].stack())
+        data_partial = X_train.loc[:, features]
+
+        pipeline = Pipeline([('scaler', StandardScaler()), ('estimator', SVR(**best_params_svr))])
+        scores = cross_validate(pipeline, data_partial, np.log(y_train), cv=10, n_jobs=-1, return_train_score=True)
+
+        train.append(scores['train_score'].mean())
+        test.append(scores['test_score'].mean())
+        
+    plt.figure(figsize=(16,6))
+    plt.plot(range(1, max_num_features), train, label='Train')
+    plt.plot(range(1, max_num_features), test, label='Test')
+    plt.xticks(range(1, max_num_features))
+    plt.legend()
+    plt.xlabel('Top N Features from all feature ratings')
+    plt.ylabel('metric score %')
+    plt.title('SVM Regression')
+
+def graph_cum_variance(X_train, y_train):
+    
+    scaler = StandardScaler()
+    data_std = scaler.fit_transform(X_train)
+    
+    pca = PCA()
+    pca.fit(data_std)
+    cum_var = np.cumsum(pca.explained_variance_ratio_)
+    
+    plt.figure(figsize=(16,4))
+    plt.bar(range(len(cum_var)), cum_var)    
+    
 def get_scores_rfc(X_train, X_test, y_train, y_test):
     """prints f1 train_score and test_score for random forest classifier"""
     best_params_rfc={'max_depth': 20,
@@ -80,81 +388,10 @@ def hist_data_columns(data, columns, ncols=4):
     
     fig.tight_layout()
 
-def handling_missing_values(df):
-    df.Alley = df.Alley.fillna(value = 'NoAlley')
-    df.BsmtCond = df.BsmtCond.fillna(value = 'NoBsmt')
-    df.BsmtQual = df.BsmtQual.fillna(value = 'NoBsmt')
-    df.BsmtExposure = df.BsmtExposure.fillna(value= 'NoBsmt')
-    df.BsmtFinType1 = df.BsmtFinType1.fillna(value= 'NoBsmt')
-    df.BsmtFinType2 = df.BsmtFinType2.fillna(value= 'NoBsmt')
-    df.FireplaceQu = df.FireplaceQu.fillna(value = 'Nofireplace')
-    df.GarageType = df.GarageType.fillna(value = 'NoGarage')
-    df.GarageCond = df.GarageCond.fillna(value = 'NoGarage')
-    df.GarageFinish = df.GarageFinish.fillna(value = 'NoGarage')
-    df.GarageQual = df.GarageQual.fillna(value = 'NoGarage')
-    df.PoolQC = df.PoolQC.fillna(value = 'NoPool')
-    df.Fence = df.Fence.fillna(value = 'NoFence')
-    df.MiscFeature = df.MiscFeature.fillna(value = 'NoMisc')
-    df.LotFrontage.fillna(df.groupby('LotConfig')['LotFrontage'].transform('mean'), inplace=True)
-    df.GarageYrBlt = df.GarageYrBlt.fillna(df.YearBuilt)
-    df.GarageYrBlt = df.GarageYrBlt - df.YearBuilt
-    df.MasVnrType = df.MasVnrType.fillna(value = 'None')
-    df.MasVnrArea = df.MasVnrArea.fillna(value = 0)
-    df.dropna(inplace=True)
     
 def classification_target(data):
     return [0 if price <= 120000 else 1 if price <= 200000 else 2 for price in data['SalePrice']]
 
-def preprocessed_data(data):
-    """returns preprocessed data as numpy array ready for decision tree"""
-    
-    from sklearn.preprocessing import OneHotEncoder
-    from sklearn.preprocessing import OrdinalEncoder
-    from sklearn.preprocessing import LabelBinarizer
-    from sklearn.pipeline import Pipeline
-    from sklearn.compose import ColumnTransformer
-    
-    if 'SalePrice' in data.columns:
-        data=data.drop('SalePrice', axis=1)
-    if 'Id' in data.columns:
-        data=data.drop('Id', axis=1)
-        
-    data=data.astype({'LotFrontage': 'int64', 'MasVnrArea': 'int64', 'GarageYrBlt': 'int64'})
-    
-    categorical_data = ['MSSubClass', 'MSZoning', 'Alley', 'LandContour', 'LotConfig',
-       'Neighborhood', 'Condition1', 'Condition2', 'BldgType', 'HouseStyle', 
-       'RoofStyle', 'RoofMatl', 'Exterior1st', 'Exterior2nd', 'MasVnrType',
-       'Foundation', 'BsmtFinType1', 'BsmtFinType2', 'Heating', 'Functional', 'GarageType',
-       'Fence', 'MiscFeature', 'YrSold', 'SaleType', 'SaleCondition']
-    
-    numeric_data = ['LotFrontage', 'LotArea', 'OverallQual', 'OverallCond', 'YearBuilt', 'YearRemodAdd',
-                'MasVnrArea', 'BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF', 'TotalBsmtSF', '1stFlrSF', '2ndFlrSF',
-                'LowQualFinSF', 'GrLivArea', 'BsmtFullBath', 'BsmtHalfBath', 'FullBath',
-                'HalfBath', 'BedroomAbvGr', 'KitchenAbvGr', 'TotRmsAbvGrd', 'Fireplaces', 'GarageYrBlt',
-                'GarageCars', 'GarageArea', 'WoodDeckSF', 'OpenPorchSF',
-                'EnclosedPorch', '3SsnPorch', 'ScreenPorch', 'PoolArea', 'MiscVal', 'MoSold']
-    
-    boolean_data = ['Street', 'CentralAir']
-    
-    ordinal_data = ['LotShape', 'Utilities', 'LandSlope', 'ExterQual', 'ExterCond', 'BsmtQual',
-                'BsmtCond', 'BsmtExposure', 'HeatingQC', 'Electrical', 'KitchenQual', 'FireplaceQu',
-                'GarageFinish', 'GarageQual', 'GarageCond', 'PavedDrive', 'PoolQC']
-    
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ('cat', OneHotEncoder(handle_unknown='ignore', dtype='int8'), categorical_data),
-            ('ord', OrdinalEncoder(dtype='int8'), ordinal_data+boolean_data),
-            ('num', 'passthrough', numeric_data)])
-    
-    return preprocessor.fit_transform(data)
-    
-def restoring_data(data):
-    columns = data[0].split(',')
-    data = pd.DataFrame(data[1:])[0].str.split(',',expand=True)
-    data.columns = columns
-    for col, dtype in zip(columns, data_types):
-        data[col] = data[col].astype(dtype)
-    return data
 
 def Heatmap(df):
     corr = df.corr()
@@ -167,39 +404,6 @@ def top10Heatmap(df):
     corr = df[cols].corr()
     fig, ax = plt.subplots(figsize=(12,12))
     sns.heatmap(corr, ax=ax, xticklabels=cols, yticklabels=cols, annot=True);
-
-def LabelEncoder(df):
-    df.BsmtCond = df.BsmtCond.map({'Ex':5 ,'Gd':4 , 'TA':3 ,'Fa':2 ,'Po':1 , 'NoBsmt':0})
-    df.BsmtQual = df.BsmtQual.map({'Ex':5 ,'Gd':4 , 'TA':3 ,'Fa':2 ,'Po':1 , 'NoBsmt':0})
-    df.BsmtExposure = df.BsmtExposure.map({'Gd':4, 'Av':3, 'Mn':2, 'No':1, 'NoBsmt':0})
-    df.BsmtFinType1 = df.BsmtFinType1.map({'GLQ':6,'ALQ':5,'BLQ':4,'Rec':3,'LwQ':2,'Unf':1,'NoBsmt':0})
-    df.BsmtFinType2 = df.BsmtFinType2.map({'GLQ':6,'ALQ':5,'BLQ':4,'Rec':3,'LwQ':2,'Unf':1,'NoBsmt':0})
-    
-    df.GarageType = df.GarageType.map({'BuiltIn':6, 'Attchd': 5, '2Types':4 , 'Basment':3 , 'Detchd':2, 'CarPort' :1 , 'NoGarage': 0})
-    df.GarageCond = df.GarageCond.map({'NoGarage':0, 'Po':1, 'Fa':2, 'TA':3, 'Gd':4, 'Ex':5})
-    df.GarageQual = df.GarageQual.map({'NoGarage':0, 'Po':1, 'Fa':2, 'TA':3, 'Gd':4, 'Ex':5})
-    df.GarageFinish = df.GarageFinish.map({'Fin':3, 'RFn':2, 'Unf':1, 'NoGarage':0})
-    df.PavedDrive = df.PavedDrive.map({'Y':3,'P':2, 'N':1 })
-    
-    df.MSZoning = df.MSZoning.map({'FV':1,'C (all)':2,"RL":3,'RM':4,'RH':5})
-    df.Street = df.Street.map({'Pave':2,'Grvl':1})
-    df.Alley = df.Alley.map({'NoAlley':0,'Grvl':1, 'Pave':2})
-    df.LotShape = df.LotShape.map({'Reg':4, 'IR1':3, 'IR2':2, 'IR3':1})
-    df.ExterCond = df.ExterCond.map({"Ex":5,'Gd':4,'TA':3,'Fa':2,'Po':1})
-    df.ExterQual = df.ExterQual.map({"Ex":5,'Gd':4,'TA':3,'Fa':2,'Po':1})
-    
-    df.CentralAir = df.CentralAir.map({'Y':1, 'N':0})
-    df.HeatingQC = df.HeatingQC.map({"Ex":5,'Gd':4,'TA':3,'Fa':2,'Po':1})
-    df.FireplaceQu = df.FireplaceQu.map({"Ex":5,'Gd':4,'TA':3,'Fa':2,'Po':1, 'Nofireplace':0})
-    df.KitchenQual = df.KitchenQual.map({"Ex":5,'Gd':4,'TA':3,'Fa':2,'Po':1})
-    df.PoolQC = df.PoolQC.map({"Ex":4,'Gd':3,'TA':2,'Fa':1,'NoPool':0})
-    df.Fence = df.Fence.map({'GdPrv':4 , 'MnPrv':3 , 'GdWo':2 , 'MnWw':1 , 'NoFence':0})
-    
-    df.LandSlope = df.LandSlope.map({'Sev':3,'Mod':2, 'Gtl':1 })
-    df.Functional = df.Functional.map({'Typ':7,'Min1':6,'Min2':5,'Mod':4,'Maj1':3,'Maj2':2,'Sev':1})
-    df.SaleCondition = df.SaleCondition.map({'Normal':6,'Abnorml':5,'AdjLand':4,'Alloca':3,'Family':2,'Partial':1})
-
-    pd.get_dummies(df, drop_first= True)
     
 def get_train_test_split(data, log=False):
     if log == True:
