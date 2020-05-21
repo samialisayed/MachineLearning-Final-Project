@@ -127,6 +127,17 @@ def get_features_importances_df(X_train, y_train):
 
     return features_compare
 
+def graph_feature_importances(X_train, y_train):
+    features_compare = get_features_importances_df(X_train, y_train)
+    top_n_features = features_compare.iloc[:10, :].stack().value_counts()
+    
+    plt.figure(figsize=(18,6))
+    top_n_features[:40].plot(kind='bar')
+    plt.title('Number of models that feature is in list of top 10 features')
+    plt.ylabel('Number of models')
+    plt.xticks(rotation=45);
+    plt.yticks([1,2,3]);
+
 def graph_SVC_score_increasing_number_features(X_train, y_train, y_train_binned):
     feature_df = get_features_importances_df(X_train, y_train)
     max_num_features = 31
@@ -332,7 +343,7 @@ def graph_clf_scores():
     plt.bar(r3, test, color='#2d7f5e', width=barWidth, edgecolor='white', label='test')
 
     # Add xticks on the middle of the group bars
-    plt.xlabel('f1 score', fontweight='bold')
+    plt.title('f1 score', fontweight='bold')
     plt.xticks([r + barWidth for r in range(len(train))], ['Dummy', 'RandomForest', 'SVM'])
     plt.legend()
 
@@ -360,7 +371,7 @@ def graph_clf_scores():
     plt.bar(r3, test, color='#2d7f5e', width=barWidth, edgecolor='white', label='test')
 
     # Add xticks on the middle of the group bars
-    plt.xlabel('accuracy score', fontweight='bold')
+    plt.title('accuracy score', fontweight='bold')
     plt.xticks([r + barWidth for r in range(len(train))], ['Dummy', 'RandomForest', 'SVM'])
     plt.legend()
 
@@ -388,7 +399,7 @@ def graph_clf_scores():
     plt.bar(r3, test, color='#2d7f5e', width=barWidth, edgecolor='white', label='test')
 
     # Add xticks on the middle of the group bars
-    plt.xlabel('recall score', fontweight='bold')
+    plt.title('recall score', fontweight='bold')
     plt.xticks([r + barWidth for r in range(len(train))], ['Dummy', 'RandomForest', 'SVM'])
     plt.legend()
 
@@ -416,23 +427,58 @@ def graph_clf_scores():
     plt.bar(r3, test, color='#2d7f5e', width=barWidth, edgecolor='white', label='test');
 
     # Add xticks on the middle of the group bars
-    plt.xlabel('precision score', fontweight='bold');
+    plt.title('precision score', fontweight='bold');
     plt.xticks([r + barWidth for r in range(len(train))], ['Dummy', 'RandomForest', 'SVM']);
     plt.legend();
-
-
     
+    plt.tight_layout()
+
+def graph_reg_scores():
+    plt.figure(figsize=(10,5))
+    barWidth = 0.25
+    val_error = [0.02581770078453299, 0.0259824771586376, 0.022769871586745077, 0.024863216391633164]
+
+    # set height of bar
+    train = [0.9073082736423019,
+             0.9074269743267204,
+             0.982299857026382,
+             0.9057892422310181]
+    validation = [0.8993150446798763,
+                  0.8992762271487311,
+                  0.8653374918145496,
+                  0.8987882583891276]
+    test = [0.8938701438797594, 0.892623556439032, 0.8653296343750956, 0.8954935569599229]
+
+    # Set position of bar on X axis
+    r1 = np.arange(len(train))
+    r2 = [x + barWidth for x in r1]
+    r3 = [x + barWidth for x in r2]
+
+    # Make the plot
+    plt.bar(r1, train, color='#7f6d5f', width=barWidth, edgecolor='white', label='train')
+    plt.bar(r2, validation, color='#557f2d', width=barWidth, edgecolor='white', label='validate', yerr=val_error)
+    plt.bar(r3, test, color='#2d7f5e', width=barWidth, edgecolor='white', label='test')
+
+    # Add xticks on the middle of the group bars
+    plt.title('R-Squared', fontweight='bold')
+    plt.xticks([r + barWidth for r in range(len(train))], ['Linear Regression (lasso)',
+                                                           'Linear Regression (ridge)', 
+                                                           'Random Forest',
+                                                           'SVM'])
+    plt.legend(loc=4);
+
+
 def graph_cum_variance(X_train, y_train):
-    
-    scaler = StandardScaler()
-    data_std = scaler.fit_transform(X_train)
-    
-    pca = PCA()
-    pca.fit(data_std)
-    cum_var = np.cumsum(pca.explained_variance_ratio_)
-    
-    plt.figure(figsize=(16,4))
-    plt.bar(range(len(cum_var)), cum_var)    
+
+        scaler = StandardScaler()
+        data_std = scaler.fit_transform(X_train)
+
+        pca = PCA()
+        pca.fit(data_std)
+        cum_var = np.cumsum(pca.explained_variance_ratio_)
+
+        plt.figure(figsize=(16,4))
+        plt.bar(range(len(cum_var)), cum_var)    
     
 def get_scores_rfc(X_train, X_test, y_train, y_test):
     """prints f1 train_score and test_score for random forest classifier"""
