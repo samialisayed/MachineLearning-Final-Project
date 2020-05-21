@@ -9,9 +9,12 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, SVR
 from sklearn.linear_model import Ridge, Lasso
 from sklearn.decomposition import PCA
+from sklearn.dummy import DummyClassifier
+from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score
 
 def get_data(file):
     data = pd.read_csv(file, index_col=0)
+    data = data.drop([89,524,636,706,1299])
     data = clean_data(data)
     data = pd.get_dummies(data, drop_first=True)
     target = data.SalePrice
@@ -300,6 +303,125 @@ def graph_svr_score_increasing_number_features(X_train, y_train):
     plt.ylabel('metric score %')
     plt.title('SVM Regression')
 
+def graph_clf_scores():
+    
+    plt.figure(figsize=(16,8))
+    barWidth = 0.25
+
+    #f1
+    plt.subplot(2,2,1)
+    val_error = [0.0006733632111376462, 0.04285034378236204, 0.051259169328772315]
+
+    # set height of bar
+    train = [0.2275475220267404,
+             0.9362245609295536,
+             0.8341622749061172]
+    validation = [0.2275496270802373,
+                  0.8097853991726909,
+                  0.817839868932561]
+    test = [0.23184079601990049, 0.8110689920948051, 0.8252475673813829]
+
+    # Set position of bar on X axis
+    r1 = np.arange(len(train))
+    r2 = [x + barWidth for x in r1]
+    r3 = [x + barWidth for x in r2]
+
+    # Make the plot
+    plt.bar(r1, train, color='#7f6d5f', width=barWidth, edgecolor='white', label='train')
+    plt.bar(r2, validation, color='#557f2d', width=barWidth, edgecolor='white', label='validate', yerr=val_error)
+    plt.bar(r3, test, color='#2d7f5e', width=barWidth, edgecolor='white', label='test')
+
+    # Add xticks on the middle of the group bars
+    plt.xlabel('f1 score', fontweight='bold')
+    plt.xticks([r + barWidth for r in range(len(train))], ['Dummy', 'RandomForest', 'SVM'])
+    plt.legend()
+
+    #accuracy
+    plt.subplot(2,2,2)
+    val_error = [0.0023250079343804337, 0.038329483446028524, 0.03565814067546885]
+
+    # set height of bar
+    train = [0.5181908924967281,
+             0.9424256713219938,
+             0.8529465011867259]
+    validation = [0.5182016914427022,
+                  0.8280306774252525,
+                  0.8408254519341141]
+    test = [0.5331807780320366, 0.8283752860411899, 0.8489702517162472]
+
+    # Set position of bar on X axis
+    r1 = np.arange(len(train))
+    r2 = [x + barWidth for x in r1]
+    r3 = [x + barWidth for x in r2]
+
+    # Make the plot
+    plt.bar(r1, train, color='#7f6d5f', width=barWidth, edgecolor='white', label='train')
+    plt.bar(r2, validation, color='#557f2d', width=barWidth, edgecolor='white', label='validate', yerr=val_error)
+    plt.bar(r3, test, color='#2d7f5e', width=barWidth, edgecolor='white', label='test')
+
+    # Add xticks on the middle of the group bars
+    plt.xlabel('accuracy score', fontweight='bold')
+    plt.xticks([r + barWidth for r in range(len(train))], ['Dummy', 'RandomForest', 'SVM'])
+    plt.legend()
+
+    #recall
+    plt.subplot(2,2,3)
+    val_error = [5.551115123125783e-17, 0.04469248484639341, 0.05576784743462415]
+
+    # set height of bar
+    train = [0.33333333333333337,
+             0.9232344328264668,
+             0.8100834099270703]
+    validation = [0.33333333333333337,
+                  0.7903445662551277,
+                  0.7956379833400368]
+    test = [0.3333333333333333, 0.8053906541157235, 0.8069318714610308]
+
+    # Set position of bar on X axis
+    r1 = np.arange(len(train))
+    r2 = [x + barWidth for x in r1]
+    r3 = [x + barWidth for x in r2]
+
+    # Make the plot
+    plt.bar(r1, train, color='#7f6d5f', width=barWidth, edgecolor='white', label='train')
+    plt.bar(r2, validation, color='#557f2d', width=barWidth, edgecolor='white', label='validate', yerr=val_error)
+    plt.bar(r3, test, color='#2d7f5e', width=barWidth, edgecolor='white', label='test')
+
+    # Add xticks on the middle of the group bars
+    plt.xlabel('recall score', fontweight='bold')
+    plt.xticks([r + barWidth for r in range(len(train))], ['Dummy', 'RandomForest', 'SVM'])
+    plt.legend()
+
+    #precision
+    plt.subplot(2,2,4)
+    val_error = [0.0007750026447934849, 0.046503431828439266, 0.03785522743464524]
+
+    # set height of bar
+    train = [0.1727302974989094,
+             0.9522937528358334,
+             0.8738345240133493]
+    validation = [0.17273389714756743,
+                  0.8433565655151808,
+                  0.8618894432429327]
+    test = [0.17772692601067885, 0.8214717224918137, 0.8567973540572374]
+
+    # Set position of bar on X axis
+    r1 = np.arange(len(train))
+    r2 = [x + barWidth for x in r1]
+    r3 = [x + barWidth for x in r2]
+
+    # Make the plot
+    plt.bar(r1, train, color='#7f6d5f', width=barWidth, edgecolor='white', label='train');
+    plt.bar(r2, validation, color='#557f2d', width=barWidth, edgecolor='white', label='validate', yerr=val_error);
+    plt.bar(r3, test, color='#2d7f5e', width=barWidth, edgecolor='white', label='test');
+
+    # Add xticks on the middle of the group bars
+    plt.xlabel('precision score', fontweight='bold');
+    plt.xticks([r + barWidth for r in range(len(train))], ['Dummy', 'RandomForest', 'SVM']);
+    plt.legend();
+
+
+    
 def graph_cum_variance(X_train, y_train):
     
     scaler = StandardScaler()
