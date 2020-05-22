@@ -619,6 +619,8 @@ def Heatmap(df):
     sns.heatmap(corr, ax=ax, cmap='seismic', center= 0.0, square = True);
 
 def top10Heatmap(df):
+    import matplotlib.pyplot as plt
+    import seaborn as sns
     corr = df.corr()
     cols = corr.nlargest(11, 'SalePrice')['SalePrice'].index 
     corr = df[cols].corr()
