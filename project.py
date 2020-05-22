@@ -623,7 +623,11 @@ def top10Heatmap(df):
     cols = corr.nlargest(11, 'SalePrice')['SalePrice'].index 
     corr = df[cols].corr()
     fig, ax = plt.subplots(figsize=(12,12))
-    sns.heatmap(corr, ax=ax, xticklabels=cols, yticklabels=cols, annot=True);
+    sns.heatmap(corr, ax=ax, xticklabels=cols, yticklabels=cols, fmt='.2f',annot=True)
+    bottom, top = ax.get_ylim()
+    ax.set_ylim(bottom + 0.5, top - 0.5)
+    plt.xticks(rotation=45) 
+    plt.yticks(rotation=45); 
     
 def get_train_test_split(data, log=False):
     if log == True:
