@@ -11,8 +11,10 @@ from sklearn.linear_model import Ridge, Lasso
 from sklearn.decomposition import PCA
 from sklearn.dummy import DummyClassifier
 from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+import seaborn as sns
 
-def get_data(file):
+def get_cleaned_data(file):
     data = pd.read_csv(file, index_col=0)
     data = data.drop([89,524,636,706,1299])
     data = clean_data(data)
@@ -20,6 +22,13 @@ def get_data(file):
     target = data.SalePrice
     data = data.drop('SalePrice', axis=1)
     return data, target
+
+def get_eda_data(file):
+    data = pd.read_csv(file, index_col=0)
+    target = data.SalePrice
+    data = data.drop('SalePrice', axis=1)
+    data, _ , _ , _ = train_test_split(data, target, test_size=.3, random_state=14)
+    return data
 
 def clean_data(df):
     #filling na
@@ -101,6 +110,49 @@ def clean_data(df):
     
     return df
 
+def hist_LandContour(X_train_uncleaned):
+    plt.figure(figsize=(8,4))
+    X_train_uncleaned.LandContour.hist();
+    plt.title('Land contour Hist');
+
+def plot_price_distribution(y_train, y_train_log):
+    plt.figure(figsize=(16,4))
+    plt.subplot(1,2,1)
+    y_train.plot(kind='hist', bins=30)
+    plt.title('SalePrice Distribution')
+    plt.xlabel('Dollars')
+    
+    plt.subplot(1,2,2)
+    y_train_log.plot(kind='hist', bins=30)
+    plt.title('log(SalePrice) Distribution')
+    plt.xlabel('log of Dollars')
+
+
+def plot_pca_and_lda(X_train, y_train):
+    scaler = StandardScaler()
+    data_std = scaler.fit_transform(X_train)
+    label = ['0-120,000 dollars' if price <= 120000 else '120,000-200,000 dollars' if price <= 200000 else '200,000+ dollars' for price in y_train]
+
+    pca = PCA(n_components=2)
+    data_pca = pca.fit_transform(data_std)
+
+    lda = LinearDiscriminantAnalysis()
+    data_lda = lda.fit_transform(data_std, label)
+
+    plt.figure(figsize=(16,5))
+
+    plt.subplot(1,2,1)
+    sns.scatterplot(data_pca[:, 0], data_pca[:, 1], hue=label)
+    plt.xlabel('Principal Component 1')
+    plt.ylabel('Principal Component 2')
+    plt.title('PCA')
+
+    plt.subplot(1,2,2)
+    sns.scatterplot(data_lda[:, 0], data_lda[:, 1], hue=label)
+    plt.xlabel('LDA Component 1')
+    plt.ylabel('LDA Component 2')
+    plt.title('LDA')
+
 def get_features_importances_df(X_train, y_train):
     
     columns = X_train.columns
@@ -131,7 +183,7 @@ def graph_feature_importances(X_train, y_train):
     features_compare = get_features_importances_df(X_train, y_train)
     top_n_features = features_compare.iloc[:10, :].stack().value_counts()
     
-    plt.figure(figsize=(18,6))
+    plt.figure(figsize=(16,4))
     top_n_features[:40].plot(kind='bar')
     plt.title('Number of models that feature is in list of top 10 features')
     plt.ylabel('Number of models')
