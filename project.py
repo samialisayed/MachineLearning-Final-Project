@@ -645,3 +645,43 @@ def get_binned_train_test_split(data):
     x = data.drop(labels = 'SalePrice', axis=1)
     x_train, x_test, y_train, y_test = train_test_split(x, target, test_size = 0.3, random_state = 42)
     return x_train, x_test, y_train, y_test
+
+def plot_commit():
+    from matplotlib.ticker import FuncFormatter
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import matplotlib
+    x = np.arange(3)
+    money = [35,26,21]
+
+    fig, ax = plt.subplots()
+    plt.bar(x, money)
+    plt.xticks(x, ('Tova', 'Sami', 'Deniz'))
+    plt.title("Commits")
+    plt.rcParams["font.size"] = 15
+    plt.show()
+    
+def plot_github():
+    from matplotlib.ticker import FuncFormatter
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import matplotlib
+    labels = ['Deniz', 'Sami', 'Tova']
+    additions = [41930, 19379, 18053]
+    deletions = [2849, 3629, 2539]
+
+    x = np.arange(len(labels))  # the label locations
+    width = 0.35  # the width of the bars
+
+    fig, ax = plt.subplots()
+    rects1 = ax.bar(x - width/2, additions, width, label='Additions')
+    rects2 = ax.bar(x + width/2, deletions, width, label='Deletions')
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_title('Additions and Deletions')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.legend()
+    
+
+   
