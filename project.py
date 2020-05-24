@@ -666,7 +666,7 @@ def plot_github():
     import numpy as np
     import matplotlib
     labels = ['Deniz', 'Sami', 'Tova']
-    additions = [42587, 19509, 21328]
+    additions = [42587, 19509, 21441]
     deletions = [3212, 3741, 3995]
 
     x = np.arange(len(labels))  # the label locations
