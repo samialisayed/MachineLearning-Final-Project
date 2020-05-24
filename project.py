@@ -655,12 +655,10 @@ def plot_commit():
     x = np.arange(3)
     money = [41,37,33]
 
-    fig, ax = plt.subplots()
     plt.bar(x, money)
     plt.xticks(x, ('Tova', 'Sami', 'Deniz'))
     plt.title("Commits")
     plt.rcParams["font.size"] = 15
-    plt.show()
     
 def plot_github():
     from matplotlib.ticker import FuncFormatter
@@ -674,14 +672,27 @@ def plot_github():
     x = np.arange(len(labels))  # the label locations
     width = 0.35  # the width of the bars
 
-    fig, ax = plt.subplots()
-    rects1 = ax.bar(x - width/2, additions, width, label='Additions')
-    rects2 = ax.bar(x + width/2, deletions, width, label='Deletions')
+    plt.bar(x - width/2, additions, width, label='Additions')
+    plt.bar(x + width/2, deletions, width, label='Deletions')
 
     # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_title('Additions and Deletions')
-    ax.set_xticks(x)
-    ax.set_xticklabels(labels)
-    ax.legend()
+    plt.title('Additions and Deletions')
+    plt.xticks(x, labels)
     
+def plot_attribution():
+    plt.figure(figsize=(14,4))
+    plt.subplot(1,2,1)
+    plot_commit()
+    plt.subplot(1,2,2)
+    plot_github()
+    plt.tight_layout
+
+def hist_data(data, ncols=4):
+    nrows = len(data.columns) // ncols + 1
+    fig, axs = plt.subplots(nrows, ncols, figsize=(18,nrows*3))
+    for ax, column in zip(axs.ravel(), data.columns):
+        data[column].hist(ax=ax)
+        ax.set_title(column)
+    
+    fig.tight_layout()    
 
