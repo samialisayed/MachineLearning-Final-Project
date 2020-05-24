@@ -646,3 +646,19 @@ def get_binned_train_test_split(data):
     x = data.drop(labels = 'SalePrice', axis=1)
     x_train, x_test, y_train, y_test = train_test_split(x, target, test_size = 0.3, random_state = 42)
     return x_train, x_test, y_train, y_test
+
+def plot_commit():
+    from matplotlib.ticker import FuncFormatter
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import matplotlib
+    x = np.arange(3)
+    money = [41,37,30]
+
+    fig, ax = plt.subplots()
+    plt.bar(x, money)
+    plt.xticks(x, ('Tova', 'Sami', 'Deniz'))
+    plt.title("Commits")
+    plt.rcParams["font.size"] = 15
+    plt.show()
+    
