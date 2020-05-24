@@ -653,7 +653,7 @@ def plot_commit():
     import numpy as np
     import matplotlib
     x = np.arange(3)
-    money = [41,37,30]
+    money = [41,37,33]
 
     fig, ax = plt.subplots()
     plt.bar(x, money)
