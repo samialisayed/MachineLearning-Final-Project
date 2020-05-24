@@ -662,3 +662,26 @@ def plot_commit():
     plt.rcParams["font.size"] = 15
     plt.show()
     
+def plot_github():
+    from matplotlib.ticker import FuncFormatter
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import matplotlib
+    labels = ['Deniz', 'Sami', 'Tova']
+    additions = [42587, 19509, 21328]
+    deletions = [3212, 3741, 3995]
+
+    x = np.arange(len(labels))  # the label locations
+    width = 0.35  # the width of the bars
+
+    fig, ax = plt.subplots()
+    rects1 = ax.bar(x - width/2, additions, width, label='Additions')
+    rects2 = ax.bar(x + width/2, deletions, width, label='Deletions')
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_title('Additions and Deletions')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.legend()
+    
+
